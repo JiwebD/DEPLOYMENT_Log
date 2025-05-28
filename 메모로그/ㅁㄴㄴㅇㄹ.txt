@@ -1,0 +1,306 @@
+aws
+
+로그인하고
+콘솔로그인
+왼쪽 상단 검색 - ec2 
+
+대시보드
+인스턴스 시작
+
+
+이름 - DEPLOY_SERVER
+
+애플리케이션/Quick Start - Aamzon Linux
+
+
+피리티어 사용하기 - 1년무료 이후 시간당요금
+
+
+키페어 생성 - 이름 : DEPLOY_SERVER , 키페어 유형 RSA , 프라이빗 키 파일 형식 .pem
+다운 받아진 .pem 파일 잃어버리면 안됨
+
+스토리지 구성 - 30GIB까지 무료 30 
+
+
+
+
+시작메뉴에서 puttygen 검색해서 열기
+Conversions - import 다운된 .pem 키 선택
+
+Save private key  - DEPLOY_SERVER.ppk로 저장
+
+
+aws에서 생성된 인스턴스 확인
+
+네트워크 및 보안/탄력적 IP - 탄력적 IP 주소 할당
+ - 가상컴퓨터환경 VPC 에서 외부로 통하기위한 도메인 할당
+
+생성된 탄력적 IP 주소 체크하고 -  작업 - 탄력적 IP 주소 연결 - 인스턴스선택하고 연결
+
+
+인스턴스 실행중인거 눌러서 
+퍼블릭 IPv4 주소 복사
+PuTTy 에 Host Name 에 붙여넣고 Open 창뜨는거 Accept 확인하고
+
+다시 Putty 에서 ip 붙여넣고 포트 22확인하고 Saved Sessions 이름에 DEPLOY_SERVER적고 Save
+
+Category에
+SSH/Auth/Credentials
+Private key file for authentication 에 DEPLOY_SERVER.ppk 
+
+Session에서 다시 Save
+
+Open
+
+login as: ec2-user
+Authenticating with public key "imported-openssh-key"
+   ,     #_
+   ~\_  ####_        Amazon Linux 2023
+  ~~  \_#####\
+  ~~     \###|
+  ~~       \#/ ___   https://aws.amazon.com/linux/amazon-linux-2023
+   ~~       V~' '->
+    ~~~         /
+      ~~._.   _/
+         _/ _/
+       _/m/'
+[ec2-user@ip-172-31-37-247 ~]$
+
+
+확인
+
+
+
+------------------
+EC2 공통 설정
+
+-----------------------------------------------
+1 EC2 생성 기본 설정
+-----------------------------------------------
+1 EC2 LINUX(프리티어) 생성
+2 탄력적 IP 연결
+3 SSH 연결
+4 보안규칙 설정( 8080 or 9090 열기)
+
+
+-----------------------------------------------
+2 TIMEZONE설정
+-----------------------------------------------
+sudo rm /etc/localtime
+sudo ln -s /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+
+-----------------------------------------------
+3 SWAP 설정 
+-----------------------------------------------
+
+------------------------
+스왑 파일 생성하기
+------------------------
+sudo dd if=/dev/zero of=/swapfile bs=128M count=16
+
+------------------------
+스왑 파일에 대한 일기 쓰기 권한 업데이트하기
+------------------------
+sudo chmod 600 /swapfile
+
+------------------------
+Linux 스왑 영역 설정하기
+------------------------
+sudo mkswap /swapfile
+
+------------------------
+스왑 공간에 스왑 파일을 추가하여 스왑 파일을 즉시 사용할 수 있도록 하기
+------------------------
+sudo swapon /swapfile
+
+------------------------
+절차가 성공했는지 확인하기
+------------------------
+sudo swapon -s
+
+------------------------
+/etc/fstab 파일을 편집하여 부팅 시 스왑 파일을 활성화하기
+------------------------
+파일 열기
+sudo vi /etc/fstab
+
+파일 가장 마지막에 다음을 추가하고 :wq로 저장하고 종료
+파일 가장 마지막줄 입력법 - shift+g -> o -> /swapfile swap swap defaults 0 0 -> esc -> :wq입력 enter
+/swapfile swap swap defaults 0 0
+
+
+
+-------------------
+이전작업 오류 없었는지 확인
+-------------------
+sudo mount -a
+아무것도 안뜨면 오류 없는거
+
+
+------------------------
+free 명령어로 메모리 확인하기
+------------------------
+free -h
+
+
+
+
+---------------------------------------
+ece 기본 설정
+
+-----------------------------------------------
+JDK 설치
+-----------------------------------------------
+sudo su
+yum install -y java-21
+
+java -version
+------------------------
+cf. 여러 jdk 중 선택  넘어가기
+------------------------
+alternatives --config java
+
+
+-----------------------------------------------
+GIT 설치
+-----------------------------------------------
+yum install -y git 
+
+git --version
+
+
+
+-----------------------------------------------
+MYSQL 설치
+-----------------------------------------------
+PPT참고
+
+
+-------------------------------------------
+Mysql 설치&설정
+
+------------------------
+저장소 다운로드
+------------------------
+
+구글에 mysql community 검색
+
+MySQL Yum Repository 
+
+Red Hat Enterprise Linux 9 / Oracle Linux 9 - Download - No thanks,just start my download. 우클릭 주소복사
+
+
+yum install -y https://dev.mysql.com/get/mysql84-community-release-el9-1.noarch.rpm
+
+
+------------------------
+저장소 다운로드
+------------------------
+yum install mysql-server
+
+y
+
+y
+
+
+
+------------------------
+초기 패스워드 확인
+------------------------
+
+systemctl restart mysqld
+
+systemctl enable mysqld
+
+cat /var/log/mysqld.log
+
+
+end
+2025-05-28T06:18:44.116780Z 6 [Note] [MY-010454] [Server] A temporary password is generatot@localhost: W.q!ipGY<4Ry
+
+에서 W.q!ipGY<4Ry 확인
+
+mysql -u root -p
+
+W.q!ipGY<4Ry
+
+
+---
+[root@ip-172-31-37-247 ec2-user]# mysql -u root -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.4.5
+
+Copyright (c) 2000, 2025, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+---
+
+
+--
+비밀번호 변경
+코리아11! 앞글자 대문자
+
+alter user root@localhost identified by 'Zhfldk11!';
+
+create user dbconn@localhost identified by 'Zhfldk11!';
+
+create user dbconn@'%' identified by 'Zhfldk11!';
+
+create database testdb;
+
+
+grant all privileges on testdb.* to dbconn;
+
+
+
+
+
+-----------------
+Mysql workbench에서 확인하기
+
+
+
+aws - ec2 - 인스턴스
+
+보안/보안그룹-sg-099effe2a58d0f471 - launch-wizard-1 클릭
+
+인바운드 규칙 편집
+
+유형 : SSH 소스 : 내아이피
+
+규칙추가 사용자 지정 TCP 포트범위 3306 내IP
+
+!!집에서 하지말기
+
+규칙 저장
+
+사용자 지정 TCP 포트범위 3306 내IP
+사용자 지정 -> MYSQL/Aurora로 바뀜
+
+
+mysql workbench 
+
+setup new connection
+
+connection name : TEST_DB_AWS
+Hostname : aws에서 만등 인스턴스 퍼블릭 ip주소 43.202.134.160
+username : dbconn
+
+Test Connection 
+패스워드 Zhfldk11!
+Continue Anyway
+Successfully mad the MySQL 창 확인 Ok
+
+
+
+
+
+
