@@ -1,0 +1,837 @@
+aws
+
+로그인하고
+콘솔로그인
+왼쪽 상단 검색 - ec2 
+
+대시보드
+인스턴스 시작
+
+
+이름 - DEPLOY_SERVER
+
+애플리케이션/Quick Start - Aamzon Linux
+
+
+피리티어 사용하기 - 1년무료 이후 시간당요금
+
+
+키페어 생성 - 이름 : DEPLOY_SERVER , 키페어 유형 RSA , 프라이빗 키 파일 형식 .pem
+다운 받아진 .pem 파일 잃어버리면 안됨
+
+스토리지 구성 - 30GIB까지 무료 30 
+
+
+
+
+시작메뉴에서 puttygen 검색해서 열기
+Conversions - import 다운된 .pem 키 선택
+
+Save private key  - DEPLOY_SERVER.ppk로 저장
+
+
+aws에서 생성된 인스턴스 확인
+
+네트워크 및 보안/탄력적 IP - 탄력적 IP 주소 할당
+ - 가상컴퓨터환경 VPC 에서 외부로 통하기위한 도메인 할당
+
+생성된 탄력적 IP 주소 체크하고 -  작업 - 탄력적 IP 주소 연결 - 인스턴스선택하고 연결
+
+
+인스턴스 실행중인거 눌러서 
+퍼블릭 IPv4 주소 복사
+PuTTy 에 Host Name 에 붙여넣고 Open 창뜨는거 Accept 확인하고
+
+다시 Putty 에서 ip 붙여넣고 포트 22확인하고 Saved Sessions 이름에 DEPLOY_SERVER적고 Save
+
+Category에
+SSH/Auth/Credentials
+Private key file for authentication 에 DEPLOY_SERVER.ppk 
+
+Session에서 다시 Save
+
+Open
+
+login as: ec2-user
+Authenticating with public key "imported-openssh-key"
+   ,     #_
+   ~\_  ####_        Amazon Linux 2023
+  ~~  \_#####\
+  ~~     \###|
+  ~~       \#/ ___   https://aws.amazon.com/linux/amazon-linux-2023
+   ~~       V~' '->
+    ~~~         /
+      ~~._.   _/
+         _/ _/
+       _/m/'
+[ec2-user@ip-172-31-37-247 ~]$
+
+
+확인
+
+
+
+------------------
+EC2 공통 설정
+
+-----------------------------------------------
+1 EC2 생성 기본 설정
+-----------------------------------------------
+1 EC2 LINUX(프리티어) 생성
+2 탄력적 IP 연결
+3 SSH 연결
+4 보안규칙 설정( 8080 or 9090 열기)
+
+
+-----------------------------------------------
+2 TIMEZONE설정
+-----------------------------------------------
+sudo rm /etc/localtime
+sudo ln -s /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+
+-----------------------------------------------
+3 SWAP 설정 
+-----------------------------------------------
+
+------------------------
+스왑 파일 생성하기
+------------------------
+sudo dd if=/dev/zero of=/swapfile bs=128M count=16
+
+------------------------
+스왑 파일에 대한 일기 쓰기 권한 업데이트하기
+------------------------
+sudo chmod 600 /swapfile
+
+------------------------
+Linux 스왑 영역 설정하기
+------------------------
+sudo mkswap /swapfile
+
+------------------------
+스왑 공간에 스왑 파일을 추가하여 스왑 파일을 즉시 사용할 수 있도록 하기
+------------------------
+sudo swapon /swapfile
+
+------------------------
+절차가 성공했는지 확인하기
+------------------------
+sudo swapon -s
+
+------------------------
+/etc/fstab 파일을 편집하여 부팅 시 스왑 파일을 활성화하기
+------------------------
+파일 열기
+sudo vi /etc/fstab
+
+파일 가장 마지막에 다음을 추가하고 :wq로 저장하고 종료
+파일 가장 마지막줄 입력법 - shift+g -> o -> /swapfile swap swap defaults 0 0 -> esc -> :wq입력 enter
+/swapfile swap swap defaults 0 0
+
+
+
+-------------------
+이전작업 오류 없었는지 확인
+-------------------
+sudo mount -a
+아무것도 안뜨면 오류 없는거
+
+
+------------------------
+free 명령어로 메모리 확인하기
+------------------------
+free -h
+
+
+
+
+---------------------------------------
+ece 기본 설정
+
+-----------------------------------------------
+JDK 설치
+-----------------------------------------------
+sudo su    (root 계정으로 전환하겠다)
+yum install -y java-21
+
+java -version
+------------------------
+cf. 여러 jdk 중 선택  넘어가기
+------------------------
+alternatives --config java
+
+
+-----------------------------------------------
+GIT 설치
+-----------------------------------------------
+yum install -y git 
+
+git --version
+
+
+
+-----------------------------------------------
+MYSQL 설치
+-----------------------------------------------
+PPT참고
+
+
+-------------------------------------------
+Mysql 설치&설정
+
+------------------------
+저장소 다운로드
+------------------------
+
+구글에 mysql community 검색
+
+MySQL Yum Repository 
+
+Red Hat Enterprise Linux 9 / Oracle Linux 9 - Download - No thanks,just start my download. 우클릭 주소복사
+
+
+yum install -y https://dev.mysql.com/get/mysql84-community-release-el9-1.noarch.rpm
+
+
+------------------------
+저장소 다운로드
+------------------------
+yum install mysql-server
+
+y
+
+y
+
+
+
+------------------------
+초기 패스워드 확인
+------------------------
+
+systemctl restart mysqld
+
+systemctl enable mysqld
+
+cat /var/log/mysqld.log
+
+
+end
+2025-05-28T06:18:44.116780Z 6 [Note] [MY-010454] [Server] A temporary password is generatot@localhost: W.q!ipGY<4Ry
+
+에서 =w8alZ=yGec/ 확인
+
+mysql -u root -p
+
+=w8alZ=yGec/
+
+
+---
+[root@ip-172-31-37-247 ec2-user]# mysql -u root -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.4.5
+
+Copyright (c) 2000, 2025, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+---
+
+
+--
+비밀번호 변경
+코리아11! 앞글자 대문자
+
+alter user root@localhost identified by 'Zhfldk11!';
+
+create user dbconn@localhost identified by 'Zhfldk11!';
+
+create user dbconn@'%' identified by 'Zhfldk11!';
+
+create database testdb;
+
+
+grant all privileges on testdb.* to dbconn;
+
+
+
+
+
+-----------------
+Mysql workbench에서 확인하기
+
+
+
+aws - ec2 - 인스턴스
+
+보안/보안그룹-sg-099effe2a58d0f471 - launch-wizard-1 클릭
+
+인바운드 규칙 편집
+
+유형 : SSH 소스 : 내아이피
+
+규칙추가 사용자 지정 TCP 포트범위 3306 내IP
+
+!!집에서 하지말기
+
+규칙 저장
+
+사용자 지정 TCP 포트범위 3306 내IP
+사용자 지정 -> MYSQL/Aurora로 바뀜
+
+
+mysql workbench 
+
+setup new connection
+
+connection name : TEST_DB_AWS
+Hostname : aws에서 만등 인스턴스 퍼블릭 ip주소 43.202.134.160
+username : dbconn
+
+Test Connection 
+패스워드 Zhfldk11!
+Continue Anyway
+Successfully mad the MySQL 창 확인 Ok
+
+
+
+
+
+------
+배포
+
+
+인텔리제이 스프링부트 프로젝트에서
+오른쪽 gradle/Tasks/build/bootJar 더블클릭
+
+왼쪽 프로젝트 텝에서
+build/libs/demo-0.0.1-SNAPSHOT.jar 마우스 우클릭 > 다음으로 열기 > 탐색기
+
+
+열린 폴더에서 cmd
+java -jar demo-0.0.1-SNAPSHOT.jar
+
+실행 확인
+
+
+
+--
+명령어로 실습
+
+스프링부트 프로젝트 폴더에서 cmd 
+
+gradlew build
+
+
+프로젝트에 생성된 build > libs > demo-0.0.1-SNAPSHOT.jar 우클릭 다음으로실행 > 탐색기 에서 cmd 창 열고
+
+java -jar demo-0.0.1-SNAPSHOT.jar
+
+실행 확인
+
+
+
+
+putty에서
+mkdir /app
+cd /app
+pwd
+git clone https://github.com/JiwebD/DEPLOYMENT_Log.git      (내프로젝트 레포지토리)
+
+ls -l
+
+cd tab키
+-> cd DEPLOYMENT_Log/ 
+
+ls -l
+
+cd 스프링부트프로젝트
+
+ls -l
+
+chmod o+x gradlew     (권한주기)
+
+./gradlew build
+
+
+--
+에러발생
+[root@ip-172-31-37-247 demo]# chmod o+x gradlew
+[root@ip-172-31-37-247 demo]# ./gradlew build
+Downloading https://services.gradle.org/distributions/gradle-8.14-bin.zip
+.............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%..............100%
+
+Welcome to Gradle 8.14!
+
+Here are the highlights of this release:
+ - Java 24 support
+ - GraalVM Native Image toolchain selection
+ - Enhancements to test reporting
+ - Build Authoring improvements
+
+For more details see https://docs.gradle.org/8.14/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Could not determine the dependencies of task ':bootJar'.
+> Could not resolve all dependencies for configuration ':runtimeClasspath'.
+   > Failed to calculate the value of task ':compileJava' property 'javaCompiler'.
+      > Cannot find a Java installation on your machine (Linux 6.1.134-152.225.amzn2023.x86_64 amd64) matching: {languageVersion=21, vendor=any vendor, implementation=vendor-specific, nativeImageCapable=false}. Toolchain download repositories have not been configured.
+
+* Try:
+> Learn more about toolchain auto-detection and auto-provisioning at https://docs.gradle.org/8.14/userguide/toolchains.html#sec:auto_detection.
+> Learn more about toolchain repositories at https://docs.gradle.org/8.14/userguide/toolchains.html#sub:download_repositories.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 50s
+[root@ip-172-31-37-247 demo]#
+--
+
+toolChain 관련 오류임 뭐지?
+
+아무튼
+demo/settings.gradle에
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+붙여넣고 깃 푸쉬 하고
+
+
+다시
+푸티에서
+깃 풀 하고 
+./gradlew build 
+or
+./gradlew clean build   (전에 build 내용 삭제하고 진행)
+
+
+ls -l
+
+cd build/libs/
+
+
+java -jar demo-0.0.1-SNAPSHOT.jar&    (& 붙이면 백그라운드 실행)
+
+
+
+aws
+ec2 인스턴스 선택 > 보안 > 보안그룹 클릭 > 인바운드 규칙 편집
+규칙 추가 - 소스 - Anywherer Ip4
+저장
+
+브라우저에서 사용중 ip주소:포트번호로 접속
+
+종료는 Ctrl + c
+
+
+
+
+---
+내 스프링 프로젝트 application.properties에 
+server.port=8090 -> 8080으로 바꾸기
+
+ec2 인바운드 규칙 편집
+
+기존 8090은 JENKINS(자동배포도구) 용
+
+규칙 추가 
+포트 8080 
+소스 AnyWhere IPv4
+
+
+--
+Jenkins 다운로드
+https://www.jenkins.io/download/
+
+Red Hat Enterprise Linux and derivatives 선택
+https://www.jenkins.io/doc/book/installing/linux/#red-hat-centos
+
+코드 푸티에 복붙
+
+--
+putty
+
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+Saving to: ‘/etc/yum.repos.d/jenkins.repo’ (저장소경로)
+
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+sudo yum upgrade
+
+sudo yum install fontconfig
+
+sudo yum install jenkins
+
+rpm -qa | grep jenkins
+y
+
+vi /lib/systemd/system/jenkins.service
+:se nu    엔터
+:70    엔터
+주석 안된 72번째 줄에 Environment="JENKINS_PORT=8080"에서  80'8'0의 '8'에서 r9 누르면 8090으로 바뀜
+esc  -> :wq 
+
+
+systemctl start jenkins
+
+
+
+systemctl enable jenkins
+
+systemctl status jenkins
+
+Active : active (running) 으로 돼있는거 확인
+
+사용중 ip주소:8090 접속
+
+
+cat /var/lib/jenkins/secrets/initialAdminPassword (비밀번호 확인)
+
+비밀번호 확인 26d5c82185a348c083a977f9ba75a66f
+
+
+사용중 ip주소:9090 접속  패스워드 입력 왼쪽 클릭
+
+
+
+계정명 - admin
+암호 - Zhfldk11!
+이름
+이메일주소 - 
+
+
+
+8090 오류 많이 나서 9090으로 수정 
+
+systemctl stop jenkins
+
+systemctl daemon-reload
+
+systemctl stop jenkins
+
+vi /lib/systemd/system/jenkins.service
+:se nu    엔터
+:70    엔터
+주석 안된 72번째 줄에 Environment="JENKINS_PORT=8090"에서  '8'090의 '8'에서 r9 누르면 9090으로 바뀜
+esc  -> :wq 
+
+aws - ec2 보안그룹 인바운드 규칙에서도 8090 -> 9090으로 변경 그리고 소스 - 내 IP로 바꾸기
+
+systemctl daemon-reload
+
+systemctl restart jenkins
+
+
+http://43.202.134.160:9090/ 접속 
+아이디 비밀번호 입력하고 접속
+왼쪽에 빌드 실행 상태에 Built-In Node컴퓨토아이콘x표시있음
+눌러보면
+Disk space is below threshold of 1.00 GiB. Only 470.17 MiB out of 474.70 MiB left on /tmp.
+확인 됨
+
+putty에서
+df -h
+
+--
+
+Filesystem      Size  Used Avail Use% Mounted on
+devtmpfs        4.0M     0  4.0M   0% /dev
+tmpfs           475M     0  475M   0% /dev/shm
+tmpfs           190M  464K  190M   1% /run
+/dev/xvda1       30G  5.8G   25G  20% /
+tmpfs           475M  4.6M  471M   1% /tmp
+/dev/xvda128     10M  1.3M  8.7M  13% /boot/efi
+tmpfs            95M     0   95M   0% /run/user/1000
+
+--
+
+뭐 메모리 부족해서 에러뜨는거라함.
+
+vi /etc/fstab
+shift + g
+o
+tmpfs   /tmp    tmpfs   size=5g,mode=1777   0   0
+esc
+:wq
+
+mount -a 
+
+df -h
+
+메모리 늘어난거 확인 안됨.
+
+reboot
+
+상단 윈도우바 우클릭 Restart Session
+
+ec2-user
+
+http://43.202.134.160:9090/ 다시 접속 
+아이디 비밀번호 입력하고 접속
+왼쪽에 빌드 실행 상태 클릭
+
+Disk space is below threshold of 1.00 GiB. Only 470.17 MiB out of 474.70 MiB left on /tmp.
+없어진거 확인
+
+
+-----
+Jenkins 관리 > System
+
+젠킨스 관리 클릭 
+System 클릭
+환경변수 및 경로 정보등을 설정합니다.
+
+GitHub
+GitHub Servers
+?
+Add GitHub Server 클릭
+
+Name - GITHUB
+
+API URL - https://api.github.com 그대로두기
+
+Add Credentials
+Kind - Secret text 선택
+
+
+
+내 깃허브 세팅즈
+Developer Settings
+New personal access token (classic)
+
+Note 이름 - JENKINS_Token
+
+Select scopes
+
+workflow , write:packages 빼고 다 체크해주기
+제너레이트
+키 값 복사
+
+Secret - 키 붙여넣기
+
+ID - GITHUB_TOKEN
+Description - GITHUB_TOKEN
+
+Add
+
+
+Credentials 에 생성한 GITHUB_TOKEN 선택
+
+
+-----
+
+
+
+
+
+------
+Jenkins관리 > Tools
+
+JDK installations
+Add JDK
+Name - JDK-21
+
+----
+JAVA_HOME - 
+
+putty에 alternatives --config java 로 경로 확인 
+--
+
+[ec2-user@ip-172-31-37-152 ~]$ alternatives --config java
+
+There is 1 program that provides 'java'.
+
+  Selection    Command
+-----------------------------------------------
+*+ 1           /usr/lib/jvm/java-21-amazon-corretto.x86_64/bin/java
+
+--
+JAVA_HOME - /usr/lib/jvm/java-21-amazon-corretto.x86_64
+----
+
+
+----
+Gradle installations
+Add Gradle
+
+내 스프링프로젝트의
+/demo/gradle/wrapper/gradle-wrapper.properties  
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.14-bin.zip 그래들 버전 확인
+
+name - GRADLE-8.14
+
+Install automatically
+Install from Gradle.org
+Version - Gradle 8.14 선택
+
+----
+
+
+Save
+
+------
+
+
+
+
+------
+
+Jenkins 관리 > Plugins
+
+왼쪽 탭에 Installed plugins(설치된 플러그인) 클릭
+gradle 검색 
+Gradle Plugin 설치 되있는지 확인
+
+왼쪽 탭에 Available plugins 클릭
+
+github int 검색 
+
+GitHub Integration Plugin 선택하고 Install
+
+
+post build task 검색
+Post build taskVersion  선택 인스톨
+빌드파일 만드는거 젠킨스가 해줌 .jar ,
+빌드 후에 특정 Shell Script나 명령어 실행 가능의 역할로Post build taskVersion 플러그인 사용
+
+
+------
+
+환경변수, 툴, 플러그인 세팅 완료
+
+
+-------------
+프로젝트 생성
+Dashbord에가서 왼쪽탭에 새로운 Item 클릭
+
+Enter an item name - DEPLOY_TEST_SPRINGONLY
+
+Freestyle project 선택 
+
+Ok
+
+GitHub project 체크
+
+내 스프링 프로젝트 있는 깃 https code 복사해서
+Project url 에 붙여넣기
+
+
+소스 코드 관리
+
+Git 체크
+Repository URL - 내 스프링 프로젝트 있는 깃 https code 복사해서 Project url 에 붙여넣기
+
+
+Branches to build
+ Branch Specifier (blank for 'any') - */master -> */main 로 수정
+
+
+Build Steps
+Invoke Gradle script 선택
+Invoke Gradle script
+ Invoke Gradle
+  Gradle Version - GRADLE-8.14 선택
+Tasks - clean build
+
+빌드후 조치추가
+
+Save
+
+
+Dashboard > DEPLOY_TEST_SPRINGONLY
+
+왼쪽탭에 작업공간에 아직 작업공간 없음
+
+지금 빌드 클릭
+왼쪽 탭에 Builds 카드 아래에 Today에 생긴거 #1 클릭 
+Dashboard > DEPLOY_TEST_SPRINGONLY > #1
+
+
+Console Output 보면
+---
+Started by user jiseong
+Running as SYSTEM
+Building in workspace /var/lib/jenkins/workspace/DEPLOY_TEST_SPRINGONLY
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/JiwebD/DEPLOYMENT_Log.git
+ > git init /var/lib/jenkins/workspace/DEPLOY_TEST_SPRINGONLY # timeout=10
+Fetching upstream changes from https://github.com/JiwebD/DEPLOYMENT_Log.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.1'
+ > git fetch --tags --force --progress -- https://github.com/JiwebD/DEPLOYMENT_Log.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/JiwebD/DEPLOYMENT_Log.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision 26539d0a998ce64891029133a4391214d438f4ac (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 26539d0a998ce64891029133a4391214d438f4ac # timeout=10
+Commit message: "Update application.properties"
+First time build. Skipping changelog.
+[Gradle] - Launching build.
+Unpacking https://services.gradle.org/distributions/gradle-8.14-bin.zip to /var/lib/jenkins/tools/hudson.plugins.gradle.GradleInstallation/GRADLE-8.14 on Jenkins
+[DEPLOY_TEST_SPRINGONLY] $ /var/lib/jenkins/tools/hudson.plugins.gradle.GradleInstallation/GRADLE-8.14/bin/gradle clean build
+
+Welcome to Gradle 8.14!
+
+Here are the highlights of this release:
+ - Java 24 support
+ - GraalVM Native Image toolchain selection
+ - Enhancements to test reporting
+ - Build Authoring improvements
+
+For more details see https://docs.gradle.org/8.14/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Directory '/var/lib/jenkins/workspace/DEPLOY_TEST_SPRINGONLY' does not contain a Gradle build.
+
+A Gradle build's root directory should contain one of the possible settings files: settings.gradle, settings.gradle.kts, settings.gradle.dcl.It may also contain one of the possible build files: build.gradle, build.gradle.kts, build.gradle.dcl.
+
+To create a new Gradle build in this directory run 'gradle init'
+
+For more information about the 'init' task, please refer to https://docs.gradle.org/8.14/userguide/build_init_plugin.html in the Gradle documentation.
+
+For more details on creating a Gradle build, please refer to https://docs.gradle.org/8.14/userguide/tutorial_using_tasks.html in the Gradle documentation.
+
+* Try:
+> Run gradle init to create a new Gradle build in this directory.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s
+Build step 'Invoke Gradle script' changed build result to FAILURE
+Build step 'Invoke Gradle script' marked build as failure
+Finished: FAILURE
+
+---
+
+에러남
+
+gradle을 못 찾아서 에러 난다고함.
+
+보니까 내 레포지토리 안에 gradle이 있는데
+내래포지토리/demo/여기에 있어서 그렇다고 함.
+demo(스프링프로젝트)안의 폴더 및 파일 모두 상위 경로로 이동, demo 삭제
+
+깃 푸쉬 하고 다시
