@@ -1173,16 +1173,6 @@ cmd
 Microsoft Windows [Version 10.0.19045.5854]
 (c) Microsoft Corporation. All rights reserved.
 
-C:\Users\Administrator>nslookup
-기본 서버:  dns.google
-Address:  8.8.8.8
-
->
-C:\Users\Administrator>nslookup
-기본 서버:  dns.google
-Address:  8.8.8.8
-
->
 > www.jwdgin.shop
 서버:    dns.google
 Address:  8.8.8.8
@@ -1327,5 +1317,6 @@ java -jar demo-0.0.1-SNAPSHOT.jar
 
 
 브라우저
-
+https://www.jwdgin.shop/
+접속 됨.
 
