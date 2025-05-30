@@ -1302,9 +1302,9 @@ application.properties 코드 수정.
 server .port=443
 server.ssl.key-store=classpath:ssl/keystore.p12
 server.ssl.key-store-type=PKCS12
-server.ssl.key-store-password=123456
+server.ssl.key-store-password=1234
 
-
+git push
 
 putty
 
@@ -1314,11 +1314,18 @@ id jenkins
 
 reboot
 
-상단윈도우바 우클릭 > reset session
+상단윈도우바 우클릭 > restart session
 
 아이디 : ec2-user
 비번 : 
 
 sudo su
+
+cd /var/lib/jenkins/workspace/DEPLOY_TEST_SPRINGONLY/build/libs
+
+java -jar demo-0.0.1-SNAPSHOT.jar
+
+
+브라우저
 
 
